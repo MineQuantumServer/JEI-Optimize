@@ -4,6 +4,53 @@ All notable changes to Just Enough Threads are documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.2-mq.3
+
+### Added
+
+- Opt-in `general.sessionRuntimeCache` for NeoForge 1.21.1 / JEI 19.57 proxy
+  transfers. Retain the complete existing runtime when the physical connection,
+  generation, synchronized recipes, registry IDs/data, tags and language match.
+  Hash full encoded recipe data with SHA-256 in client-tick slices, not IDs/counts.
+- Defer only recipe-resync-triggered restarts while checking a candidate. Block
+  JEI rendering/input during validation. Changed data or encoding failures fall
+  back to normal startup; logout, resource reload and any actual stop discard it.
+- Disabled by default: intended for subservers with identical mod/plugin scripts
+  and settings. Custom plugin network payloads are not fingerprinted. This is an
+  in-memory session cache, not a persistent cache of arbitrary mod objects.
+
+### Validation
+
+- Full NeoForge build and ten regression runners pass. Tests cover cache session
+  identity, generation changes, incomplete runtime, altered data and failed encoding,
+  plus the installed JEI event ABI. Real client cache hits still require acceptance
+  testing; build tests do not establish compatibility with every mod plugin.
+
+## 0.14.2-mq.2
+
+### Fixed
+
+- Preserve wildcard constructor selectors on both modern ingredient-filter hooks.
+  The shipped old descriptor silently disabled deferred indexing on JEI 19.57,
+  leaving the entire search build on the render thread. Both hooks now require a
+  match, and their packaged selectors are covered by regression checks.
+- Guard JEI 19.57's renamed `drawForScreenBackground` and `drawForScreenForeground`
+  callbacks, as well as GUI initialization and render preparation. This fixes
+  the observed tooltip crash when an inventory is open before runtime publication.
+  Enable this variant only when the complete callback ABI and nullable runtime
+  accessor are available.
+- Run Ars Nouveau, Create Encased and EnderIO's base JEI plugin on the client thread.
+  The affected pack showed all three calling the main-thread-only ingredient
+  removal API from asynchronous recipe registration.
+
+### Validation
+
+- Full NeoForge build and all nine existing regression runners passed, including
+  the extended ABI checks against JEI 19.57.0.449. The packaged jar was tested
+  separately to check constructor selectors and all five screen-guard targets.
+- Initial mq.1 client tests restored the sidebar. The later tooltip crash and
+  synchronous filter build motivated mq.2; runtime acceptance is recorded separately.
+
 ## 0.14.2-mq.1
 
 ### Fixed

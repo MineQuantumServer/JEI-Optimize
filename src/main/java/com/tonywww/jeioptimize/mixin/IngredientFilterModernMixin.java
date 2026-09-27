@@ -76,7 +76,11 @@ public abstract class IngredientFilterModernMixin {
     }
 
     @Redirect(
-        method = "<init>",
+        // Constructors changed between modern JEI releases. Keep the wildcard through
+        // remapping; both handlers are independent of the constructor's argument list.
+        method = "<init>*",
+        remap = false,
+        require = 1,
         at = @At(
             value = "INVOKE",
             target = "Lmezz/jei/gui/ingredients/IngredientFilter;createElementSearch("
@@ -119,7 +123,7 @@ public abstract class IngredientFilterModernMixin {
         return emptySearch;
     }
 
-    @Inject(method = "<init>", at = @At("RETURN"))
+    @Inject(method = "<init>*", remap = false, at = @At("RETURN"), require = 1)
     private void jeiopt$scheduleAsyncBuild(CallbackInfo callbackInfo) {
         JeiOptFilterBootstrap.Pending pending = JeiOptFilterBootstrap.take();
         if (pending == null) {

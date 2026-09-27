@@ -23,6 +23,10 @@ public final class JeiOptFeatureFlags {
         return enabled() && JeiOptConfig.DIAGNOSTICS_PLUGIN_TIMING.get();
     }
 
+    public static boolean sessionRuntimeCache() {
+        return enabled() && configReady() && JeiOptConfig.GENERAL_SESSION_RUNTIME_CACHE.get();
+    }
+
     public static boolean registrationCounts() {
         return enabled() && JeiOptConfig.DIAGNOSTICS_REGISTRATION_COUNTS.get();
     }

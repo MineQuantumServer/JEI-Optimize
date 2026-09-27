@@ -47,6 +47,7 @@ public final class JeiOptStartupDriver {
     }
 
     public static void onJeiStopping() {
+        com.tonywww.jeioptimize.runtime.JeiSessionCache.clear();
         long generation = JeiOptRuntimeState.currentGeneration();
         boolean cancelledStartup = JeiOptExecutors.cancelJeiStart();
         try {

@@ -20,6 +20,8 @@ import java.util.zip.ZipFile;
 public final class TooltipAbiTest {
     public static void main(String[] arguments) throws IOException {
         verifyNativeSearchConstructors();
+        verifyModernFilterConstructorHooks();
+        check(!JeiOptMixinPlugin.hasScreenRenderGuardContract(new ClassNode()), "missing screen render ABI rejected");
         verifyRenderPreparationGuard();
         verifyMineColoniesContracts();
         verifyMineColoniesAttributeContract();
@@ -79,6 +81,29 @@ public final class TooltipAbiTest {
                 continue;
             }
             try (ZipFile archive = new ZipFile(argument)) {
+                if (argument.contains("19.57.")) {
+                    ClassNode observer = new ClassNode();
+                    ClassNode internal = new ClassNode();
+                    try (InputStream source = archive.getInputStream(archive.getEntry("mezz/jei/neoforge/startup/StartEventObserver.class"))) {
+                        new ClassReader(source).accept(observer, 0);
+                    }
+                    try (InputStream source = archive.getInputStream(archive.getEntry("mezz/jei/common/Internal.class"))) {
+                        new ClassReader(source).accept(internal, 0);
+                    }
+                    check(JeiOptMixinPlugin.hasSessionCacheContract(observer, internal), "released session cache ABI");
+                    var event = observer.methods.stream().filter(m -> m.name.equals("onRecipesUpdatedEvent")).findFirst().orElseThrow();
+                    long restarts = java.util.Arrays.stream(event.instructions.toArray()).filter(i ->
+                        i instanceof MethodInsnNode call && call.name.equals("restart") && call.desc.equals("()V")
+                            && call.owner.equals("mezz/jei/neoforge/startup/StartEventObserver")).count();
+                    check(restarts == 1, "exactly one resync restart is redirected");
+                    event.desc = "()V";
+                    check(!JeiOptMixinPlugin.hasSessionCacheContract(observer, internal), "reject changed event ABI");
+                    try (InputStream source = archive.getInputStream(archive.getEntry("mezz/jei/gui/events/GuiEventHandler.class"))) {
+                        ClassNode handler = new ClassNode();
+                        new ClassReader(source).accept(handler, 0);
+                        verifyScreenRenderGuards(handler);
+                    }
+                }
                 var searchEntry = archive.getEntry("mezz/jei/gui/search/ElementSearch.class");
                 if (searchEntry != null) {
                     try (InputStream source = archive.getInputStream(searchEntry)) {
@@ -143,6 +168,73 @@ public final class TooltipAbiTest {
             }
         }
         System.out.println("TooltipAbiTest passed");
+    }
+
+    private static void verifyScreenRenderGuards(ClassNode handler) throws IOException {
+        check(JeiOptMixinPlugin.hasScreenRenderGuardContract(handler), "JEI 19.57 screen guards enabled");
+        try (InputStream source = TooltipAbiTest.class.getResourceAsStream(
+            "/com/tonywww/jeioptimize/mixin/JeiGuiRenderGuardScreenMixin.class")) {
+            check(source != null, "screen guard mixin exists");
+            ClassNode mixin = new ClassNode();
+            new ClassReader(source).accept(mixin, 0);
+            int targets = 0;
+            for (var method : mixin.methods) {
+                if (method.visibleAnnotations == null) { continue; }
+                for (var annotation : method.visibleAnnotations) {
+                    if (!annotation.desc.endsWith("/Inject;")) { continue; }
+                    Map<String, Object> values = new HashMap<>();
+                    for (int i = 0; i < annotation.values.size(); i += 2) {
+                        values.put((String) annotation.values.get(i), annotation.values.get(i + 1));
+                    }
+                    check(Boolean.TRUE.equals(values.get("cancellable")), "screen render can be blocked");
+                    var at = (org.objectweb.asm.tree.AnnotationNode) ((java.util.List<?>) values.get("at")).get(0);
+                    check(at.values.contains("HEAD"), "guard runs before tooltips access missing runtime");
+                    for (Object selector : (java.util.List<?>) values.get("method")) {
+                        check(handler.methods.stream().anyMatch(target -> (target.name + target.desc).equals(selector)),
+                            "packaged render guard matches actual JEI method " + selector);
+                        targets++;
+                    }
+                    boolean readsRuntime = false;
+                    boolean readsLifecycle = false;
+                    for (var instruction : method.instructions) {
+                        if (instruction instanceof MethodInsnNode call) {
+                            readsRuntime |= call.name.equals("jeiopt$getNullableRuntime");
+                            readsLifecycle |= call.name.equals("blocksJeiRendering");
+                        }
+                    }
+                    check(readsRuntime && readsLifecycle, "each render entry checks runtime and generation readiness");
+                }
+            }
+            check(targets == 5, "all screen entry points covered");
+        }
+        handler.methods.removeIf(method -> method.name.equals("drawForScreenForeground"));
+        check(!JeiOptMixinPlugin.hasScreenRenderGuardContract(handler), "partial render ABI rejected");
+    }
+
+    private static void verifyModernFilterConstructorHooks() throws IOException {
+        try (InputStream source = TooltipAbiTest.class.getResourceAsStream(
+            "/com/tonywww/jeioptimize/mixin/IngredientFilterModernMixin.class")) {
+            check(source != null, "modern filter mixin exists");
+            ClassNode mixin = new ClassNode();
+            new ClassReader(source).accept(mixin, 0);
+            int hooks = 0;
+            for (var method : mixin.methods) {
+                if (!method.name.equals("jeiopt$deferElementSearch") && !method.name.equals("jeiopt$scheduleAsyncBuild")) { continue; }
+                if (method.visibleAnnotations == null) { continue; }
+                for (var annotation : method.visibleAnnotations) {
+                    if (!annotation.desc.endsWith("/Inject;") && !annotation.desc.endsWith("/Redirect;")) { continue; }
+                    Map<String, Object> values = new HashMap<>();
+                    for (int i = 0; i < annotation.values.size(); i += 2) {
+                        values.put((String) annotation.values.get(i), annotation.values.get(i + 1));
+                    }
+                    check(java.util.List.of("<init>*").equals(values.get("method")), "all constructor shapes must be targeted");
+                    check(Boolean.FALSE.equals(values.get("remap")), "constructor selector must not specialize to compile-time JEI");
+                    check(Integer.valueOf(1).equals(values.get("require")), "budgeted build hooks must not silently disappear");
+                    hooks++;
+                }
+            }
+            check(hooks == 2, "both the defer and schedule hooks must be verified");
+        }
     }
 
     private static java.util.List<?> nativeSearchSelectors() throws IOException {

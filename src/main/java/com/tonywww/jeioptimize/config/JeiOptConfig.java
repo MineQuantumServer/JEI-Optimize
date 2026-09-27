@@ -37,6 +37,7 @@ public final class JeiOptConfig {
     *///?}
 
     static final BooleanValue GENERAL_ENABLED;
+    static final BooleanValue GENERAL_SESSION_RUNTIME_CACHE;
 
     static final BooleanValue CONTENT_DISABLE_ANVIL_REPAIR;
     static final BooleanValue CONTENT_DISABLE_ANVIL_ENCHANT;
@@ -114,6 +115,12 @@ public final class JeiOptConfig {
         GENERAL_ENABLED = builder
             .comment("Master switch. If false, all JEI Optimize mixin behavior no-ops or falls back to JEI baseline.")
             .define("enabled", true);
+        GENERAL_SESSION_RUNTIME_CACHE = builder
+            .comment("Experimental NeoForge 1.21.1 / JEI 19.57 same-connection runtime cache.",
+                "Enable only for proxy subservers with identical mod/plugin scripts and settings.",
+                "Checks synchronized recipes, registry contents and tags before reusing JEI.",
+                "Plugin-specific custom network data is not covered. Disconnect or F3+T forces rebuild.")
+            .define("sessionRuntimeCache", false);
         builder.pop();
 
         builder.push("jeiContent");

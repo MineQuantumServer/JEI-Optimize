@@ -148,6 +148,7 @@ public final class JeiOptStartupProgressState {
     }
 
     public static boolean blocksJeiInput() {
+        if (JeiSessionCache.isValidating()) return true;
         synchronized (LOCK) {
             return stage == Stage.PREPARING
                 || stage == Stage.INDEXING

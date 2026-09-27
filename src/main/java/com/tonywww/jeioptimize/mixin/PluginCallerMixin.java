@@ -53,6 +53,10 @@ public abstract class PluginCallerMixin {
             || pluginUid == null
             || "blue_skies:jei_plugin".equals(pluginUid)
             || "delightful:jei_plugin".equals(pluginUid)
+            // These callbacks remove ingredients through JEI's main-thread-only runtime API.
+            || "ars_nouveau:main".equals(pluginUid)
+            || "createcasing:jei".equals(pluginUid)
+            || "enderio:base".equals(pluginUid)
             || JEI_VANILLA_PLUGIN.equals(pluginUid) && REGISTERING_INGREDIENTS.equals(title)
             || (JEI_FORGE_GUI_PLUGIN.equals(pluginUid) || JEI_NEOFORGE_GUI_PLUGIN.equals(pluginUid))
                 && REGISTERING_RUNTIME.equals(title)

@@ -1138,8 +1138,18 @@ public final class JeiOptMixinPlugin implements IMixinConfigPlugin {
         if (!readEarlyBoolean("enabled", true)) {
             return false;
         }
+        if (mixinClassName.equals(MIXIN_PACKAGE + "JeiSessionCacheMixin")) {
+            ClassNode observer = readTarget(targetClassName);
+            ClassNode internal = readTarget("mezz.jei.common.Internal");
+            return hasSessionCacheContract(observer, internal)
+                && hasScreenRenderGuardContract(readTarget("mezz.jei.gui.events.GuiEventHandler"));
+        }
         if (mixinClassName.equals(MIXIN_PACKAGE + "accessor.JeiRuntimeAccessor")) {
             return hasRuntimeAccessContract(readTarget(targetClassName));
+        }
+        if (mixinClassName.equals(MIXIN_PACKAGE + "JeiGuiRenderGuardScreenMixin")) {
+            return hasRuntimeAccessContract(readTarget("mezz.jei.common.Internal"))
+                && hasScreenRenderGuardContract(readTarget(targetClassName));
         }
         if ((mixinClassName.equals(MIXIN_PACKAGE + "JeiGuiRenderGuardMixin")
             || mixinClassName.equals(MIXIN_PACKAGE + "JeiGuiBackgroundRenderGuardLegacyMixin")
@@ -1353,6 +1363,25 @@ public final class JeiOptMixinPlugin implements IMixinConfigPlugin {
             return readsAnchor && updatesLayout;
         }
         return false;
+    }
+
+    static boolean hasScreenRenderGuardContract(ClassNode handler) {
+        if (handler == null) { return false; }
+        return Requirement.method("", "onGuiInit", "(Lnet/minecraft/client/gui/screens/Screen;)V").isPresentIn(handler)
+            && Requirement.method("", "onGuiOpen", "(Lnet/minecraft/client/gui/screens/Screen;)V").isPresentIn(handler)
+            && Requirement.method("", "updateForScreenRender", "(Lnet/minecraft/client/gui/screens/Screen;II)V").isPresentIn(handler)
+            && Requirement.method("", "drawForScreenBackground", "(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphics;)V").isPresentIn(handler)
+            && Requirement.method("", "drawForScreenForeground", "(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphics;II)V").isPresentIn(handler);
+    }
+
+    static boolean hasSessionCacheContract(ClassNode observer, ClassNode internal) {
+        return observer != null && internal != null
+            && Requirement.method("session cache", "restart", "()V").isPresentIn(observer)
+            && Requirement.method("session cache", "onRecipesUpdatedEvent",
+                "(Lnet/neoforged/neoforge/client/event/RecipesUpdatedEvent;)V").isPresentIn(observer)
+            && Requirement.method("session cache", "onResourceManagerReload",
+                "(Lnet/minecraft/server/packs/resources/ResourceManager;)V").isPresentIn(observer)
+            && Requirement.method("session cache", "getClientSyncedRecipes", "()Ljava/util/List;").isPresentIn(internal);
     }
 
     static boolean hasNativeSearchBuilderContract(ClassNode search) {
