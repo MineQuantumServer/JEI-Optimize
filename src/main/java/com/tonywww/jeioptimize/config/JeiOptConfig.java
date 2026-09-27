@@ -124,8 +124,8 @@ public final class JeiOptConfig {
                 "FULL / 全部缓存: retain the complete JEI runtime across same-connection proxy transfers.",
                 "FULL skips recipe-data validation and can display old recipes when subservers differ.",
                 "首次进服仍需加载。断开连接、F3+T 或 JEI 手动重载会重建。切换模式在下次重建/跨服时生效。",
-                "The legacy sessionRuntimeCache setting is replaced by this mode; default remains ACCURATE.")
-            .defineEnum("cacheMode", CacheMode.ACCURATE);
+                "The legacy sessionRuntimeCache setting is replaced by this mode; default is FULL.")
+            .defineEnum("cacheMode", CacheMode.FULL);
         GENERAL_PINYIN_DICTIONARY_CACHE = builder
             .comment("Cache JECharacters' string-only pinyin dictionary across JEI rebuilds.",
                 "Current ingredient mappings and recipes are always rebuilt; no prior server recipe is reused.",

@@ -1,15 +1,16 @@
-# JEI 跨服缓存模式（mq.4）
+# JEI 跨服缓存模式（mq.5）
 
 在 `config/justenoughthreads-client.toml` 现有的 `[general]` 段中修改：
 
 ```toml
 [general]
 enabled = true
-cacheMode = "ACCURATE"
+cacheMode = "FULL"
 pinyinDictionaryCache = true
 ```
 
-不要重复添加 `[general]` 段。旧版的 `sessionRuntimeCache` 已移除，升级默认采用 ACCURATE。
+不要重复添加 `[general]` 段。旧版的 `sessionRuntimeCache` 已移除，mq.5 新生成配置默认采用 FULL。
+已有配置会保留原值；若原来是 ACCURATE，需要手动改为 FULL。仍可随时切回 ACCURATE。
 
 | 配置值 | 行为 | 取舍 |
 | --- | --- | --- |
@@ -32,6 +33,7 @@ pinyinDictionaryCache = true
   同时仍有 `Starting JEI took`，这是准确模式的正常行为。
 - `overflowPuts` 不为零意味着达到了共享字典上限，超出的输入仍正常建立局部索引。
 
-mq.4 已通过完整构建、11 项回归运行器和实际 JEI／JECharacters JAR 接口检查。
+mq.5 仅调整默认模式，已通过完整构建及现有 11 项回归运行器。
+mq.4 已通过实际 JEI／JECharacters JAR 接口检查，mq.5 未修改相关接口。
 包含真实 PinIn 1.6.0 中文、拼音、模糊音、空查询、重复词、运行时新增、跨服旧对象隔离与溢出路径对照测试。
 这不等于已验证整合包的游戏内稳定性或具体提速幅度，仍需实际进服与跨服测试。

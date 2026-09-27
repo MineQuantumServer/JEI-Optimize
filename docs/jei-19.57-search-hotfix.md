@@ -1,6 +1,7 @@
 # JEI 19.57 missing sidebar after asynchronous startup
 
-Current release: mq.4. See [cache modes](cache-modes.md) for ACCURATE/FULL and the
+Current release: mq.5 (FULL by default for new configurations; existing settings
+are preserved). See [cache modes](cache-modes.md) for ACCURATE/FULL and the
 string-only pinyin dictionary cache. The mq.3 digest experiment below is historical
 and was removed after real subserver differences were measured.
 
