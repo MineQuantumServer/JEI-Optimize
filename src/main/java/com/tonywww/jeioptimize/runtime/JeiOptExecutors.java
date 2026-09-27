@@ -159,6 +159,24 @@ public final class JeiOptExecutors {
         ensureJeiStartActive(task);
     }
 
+    /** Only the startup worker waits; the world check and callback run together on a client tick. */
+    public static void runWhenWorldReadyAndWait(Runnable command) {
+        Objects.requireNonNull(command, "command");
+        JeiStartTask task = CURRENT_JEI_START.get();
+        if (task == null) {
+            throw new IllegalStateException("Only the JEI startup thread may wait for a client world");
+        }
+        ensureJeiStartActive(task);
+        Minecraft minecraft = Minecraft.getInstance();
+        JeiOptWorldReadyTask work = new JeiOptWorldReadyTask(
+            () -> !task.cancelled.get() && JeiOptRuntimeState.isCurrent(task.generation),
+            () -> minecraft.level != null && minecraft.player != null && minecraft.getConnection() != null,
+            command);
+        JeiOptRuntimeState.track(work.completion());
+        JeiOptClientTickQueue.enqueue(work);
+        awaitJeiStartTask(work.completion());
+    }
+
     public static void runOnMainThreadAndWait(Runnable command) {
         Objects.requireNonNull(command, "command");
         JeiStartTask task = CURRENT_JEI_START.get();

@@ -55,6 +55,8 @@ public abstract class JeiStarterMixin {
         ci.cancel();
         JeiOptExecutors.runJeiStartAsync(generation, () -> {
             try {
+                // Login/recipe events can precede world attachment, especially on proxy transfers.
+                JeiOptExecutors.runWhenWorldReadyAndWait(() -> {});
                 ((JeiStarter) (Object) this).start();
                 JeiOptStartupProgressState.markRuntimeComplete(generation);
             } catch (Throwable t) {

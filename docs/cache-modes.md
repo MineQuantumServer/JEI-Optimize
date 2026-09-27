@@ -1,4 +1,4 @@
-# JEI 跨服缓存模式（mq.5）
+# JEI 跨服缓存模式（mq.6）
 
 在 `config/justenoughthreads-client.toml` 现有的 `[general]` 段中修改：
 
@@ -9,7 +9,7 @@ cacheMode = "FULL"
 pinyinDictionaryCache = true
 ```
 
-不要重复添加 `[general]` 段。旧版的 `sessionRuntimeCache` 已移除，mq.5 新生成配置默认采用 FULL。
+不要重复添加 `[general]` 段。旧版的 `sessionRuntimeCache` 已移除，从 mq.5 起新生成配置默认采用 FULL。
 已有配置会保留原值；若原来是 ACCURATE，需要手动改为 FULL。仍可随时切回 ACCURATE。
 
 | 配置值 | 行为 | 取舍 |
@@ -19,6 +19,7 @@ pinyinDictionaryCache = true
 
 首次进服都需要完整加载。断开连接、重启客户端、F3+T 或 JEI 手动重载会重新构建。
 修改模式不会热替换正在显示的配方；配置被客户端读取后，在下一次跨服配方同步时选择是否复用。
+mq.6 会等待客户端世界就绪后启动，并拒绝复用包含占位界面的不完整运行时。
 如需立即更新当前服合成表，用 F3+T 或重新连接。服务器仍决定配方是否可以实际合成。
 
 准确模式下，拼音缓存只保存字符串及其搜索结构；每个 JEI 搜索器都新建当前物品集合。
@@ -33,7 +34,7 @@ pinyinDictionaryCache = true
   同时仍有 `Starting JEI took`，这是准确模式的正常行为。
 - `overflowPuts` 不为零意味着达到了共享字典上限，超出的输入仍正常建立局部索引。
 
-mq.5 仅调整默认模式，已通过完整构建及现有 11 项回归运行器。
-mq.4 已通过实际 JEI／JECharacters JAR 接口检查，mq.5 未修改相关接口。
+mq.6 已通过完整构建、12 项回归运行器及实际 JEI／JECharacters JAR 接口检查。
+新增慢进服、等待时断线、过期任务取消，以及 JEI 占位界面拒绝缓存和恢复测试。
 包含真实 PinIn 1.6.0 中文、拼音、模糊音、空查询、重复词、运行时新增、跨服旧对象隔离与溢出路径对照测试。
 这不等于已验证整合包的游戏内稳定性或具体提速幅度，仍需实际进服与跨服测试。

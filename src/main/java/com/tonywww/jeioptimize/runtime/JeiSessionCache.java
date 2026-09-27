@@ -39,13 +39,16 @@ public final class JeiSessionCache {
 
     public static void onRecipeRestart(Runnable restart) {
         boolean ready = !JeiOptStartupProgressState.blocksJeiInput()
-            && JeiRuntimeAccessor.jeiopt$getNullableRuntime() != null;
+            && JeiRuntimeReadiness.hasGui(JeiRuntimeAccessor.jeiopt$getNullableRuntime());
         if (lease != null && lease.canReuse(JeiOptFeatureFlags.sessionRuntimeCache(), currentConnection(),
                 JeiOptRuntimeState.currentGeneration(), ready)
                 && Minecraft.getInstance().level != null) {
             RegistryUtil.setRegistryAccess(Minecraft.getInstance().level.registryAccess());
             JeiOptimize.LOGGER.info("JEI FULL cache HIT: retained current runtime; recipe validation and rebuild skipped");
             return;
+        }
+        if (lease != null && JeiOptFeatureFlags.sessionRuntimeCache() && !ready) {
+            JeiOptimize.LOGGER.info("JEI FULL cache MISS: runtime or GUI is incomplete; rebuilding");
         }
         clear();
         restart.run();

@@ -79,19 +79,25 @@ public abstract class PluginCallerMixin {
                     JeiOptClientTickQueue.awaitNextClientTick();
                 }
                 if (requiresMainThread) {
-                    JeiOptExecutors.runOnMainThreadAndWait(() -> {
+                    boolean guiRegistration = (JEI_FORGE_GUI_PLUGIN.equals(pluginUid) || JEI_NEOFORGE_GUI_PLUGIN.equals(pluginUid))
+                        && REGISTERING_RUNTIME.equals(title);
+                    Runnable mainThreadCall = () -> {
                         JeiOptimize.LOGGER.debug(
                             "JEI Optimize running plugin {} phase '{}' on the client thread",
                             pluginUid != null ? pluginUid : modPlugin.getClass().getName(),
                             title
                         );
-                        if ((JEI_FORGE_GUI_PLUGIN.equals(pluginUid) || JEI_NEOFORGE_GUI_PLUGIN.equals(pluginUid))
-                            && REGISTERING_RUNTIME.equals(title)) {
+                        if (guiRegistration) {
                             JeiOptFilterBootstrap.runGuiRegistration(pluginCall);
                         } else {
                             pluginCall.run();
                         }
-                    });
+                    };
+                    if (guiRegistration) {
+                        JeiOptExecutors.runWhenWorldReadyAndWait(mainThreadCall);
+                    } else {
+                        JeiOptExecutors.runOnMainThreadAndWait(mainThreadCall);
+                    }
                     JeiOptFilterBootstrap.awaitBuilds();
                 } else {
                     pluginCall.run();

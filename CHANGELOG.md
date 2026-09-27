@@ -4,6 +4,27 @@ All notable changes to Just Enough Threads are documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.2-mq.6
+
+- Wait for a client world, player and connection before asynchronous JEI startup.
+  Recheck those conditions on the client tick that runs GUI registration. The
+  startup worker waits without blocking rendering; disconnects and newer startup
+  generations cancel pending work.
+- Reject FULL cache reuse when JEI published dummy overlay, filter or recipe-GUI
+  APIs after a GUI plugin failure. A non-null runtime alone is not proof of a
+  working sidebar. Incomplete runtimes rebuild on the next recipe sync.
+- Fix the reported mq.5 sequence: `minecraft.level must not be null` during
+  `jei:neoforge_gui` registration, followed by an apparent successful startup and
+  a FULL cache hit that preserved the missing sidebar.
+- Validation: full NeoForge build and 12 regression runners, including delayed
+  world attachment, cancellation, GUI failure/recovery and real JEI dummy APIs.
+  Packaged tests pass against JEI 19.57.0.449 and JECharacters 4.5.29. In-game
+  acceptance on the reporting player's client is still required.
+
+## 0.14.2-mq.5
+
+- Default newly generated configurations to FULL. Existing settings are preserved.
+
 ## 0.14.2-mq.4
 
 - Replace `sessionRuntimeCache` with `general.cacheMode = "ACCURATE" | "FULL"`.

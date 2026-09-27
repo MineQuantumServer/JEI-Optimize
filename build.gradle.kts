@@ -174,6 +174,7 @@ val compileTooltipTests = tasks.register<JavaCompile>("compileTooltipTests") {
     })
 }
 val tooltipTests = listOf(
+    "runtime.TooltipWorldReadyTest",
     "index.TooltipPinyinDictionaryTest",
     "runtime.TooltipSessionCacheTest",
     "integration.TooltipMineColoniesAttributesTest",
