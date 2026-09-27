@@ -61,6 +61,14 @@ final class GenerationAwareRecipeIndex<T> {
         return broken;
     }
 
+    synchronized void clear() {
+        generation = Long.MIN_VALUE;
+        trackedRecipes = null;
+        recipesByIdentity.clear();
+        active = false;
+        broken = false;
+    }
+
     private void switchGeneration(long expectedGeneration) {
         if (generation == expectedGeneration) {
             return;

@@ -17,6 +17,12 @@ public final class BrewingRecipeIndex {
     private BrewingRecipeIndex() {
     }
 
+    public static void clear() {
+        INDEX.clear();
+        WARNING_LOGGED.set(false);
+        loggedGeneration = Long.MIN_VALUE;
+    }
+
     public static boolean prepare(Collection<IJeiBrewingRecipe> recipes) {
         return INDEX.prepare(
             recipes,

@@ -1378,13 +1378,12 @@ public final class JeiOptMixinPlugin implements IMixinConfigPlugin {
     }
 
     static boolean hasSessionCacheContract(ClassNode observer, ClassNode internal) {
-        return observer != null && internal != null
+        return observer != null && hasRuntimeAccessContract(internal)
             && Requirement.method("session cache", "restart", "()V").isPresentIn(observer)
             && Requirement.method("session cache", "onRecipesUpdatedEvent",
                 "(Lnet/neoforged/neoforge/client/event/RecipesUpdatedEvent;)V").isPresentIn(observer)
             && Requirement.method("session cache", "onResourceManagerReload",
-                "(Lnet/minecraft/server/packs/resources/ResourceManager;)V").isPresentIn(observer)
-            && Requirement.method("session cache", "getClientSyncedRecipes", "()Ljava/util/List;").isPresentIn(internal);
+                "(Lnet/minecraft/server/packs/resources/ResourceManager;)V").isPresentIn(observer);
     }
 
     static boolean hasPinyinDictionaryContract(ClassNode storage, ClassNode match) {

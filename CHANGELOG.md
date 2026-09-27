@@ -4,6 +4,22 @@ All notable changes to Just Enough Threads are documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.2-mq.7
+
+- Treat ordinary and future-wrapped startup cancellation as cancellation, rather
+  than forwarding it to the client thread as a fatal JEI startup failure.
+- Track experimental recipe warmup tasks by startup generation and replace its
+  uninterruptible join with a cancellable startup wait. Skip warmup outside the
+  dedicated startup worker. The experiment remains disabled by default.
+- Clear brewing recipe indexes and Productive Trees tool ingredients at runtime
+  teardown. Publish the tool cache generation and ingredient together.
+- Require the actual nullable runtime accessor field before enabling FULL cache
+  hooks; remove the obsolete recipe-fingerprint API requirement.
+- Validation: NeoForge 1.21.1 build, 14 regression runners, packaged JEI 19.57.0.449
+  and JECharacters 4.5.29 ABI checks. New cancellation and accessor-gate assertions
+  both detect the corresponding defects in mq.6. In-game acceptance is pending.
+  See [the code review report](docs/code-review-mq7.md) for scope and limitations.
+
 ## 0.14.2-mq.6
 
 - Wait for a client world, player and connection before asynchronous JEI startup.

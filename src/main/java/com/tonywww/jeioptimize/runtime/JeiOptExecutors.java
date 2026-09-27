@@ -129,7 +129,11 @@ public final class JeiOptExecutors {
     }
 
     public static boolean isJeiStartCancellation(Throwable throwable) {
-        return throwable instanceof JeiStartCancelled;
+        while ((throwable instanceof java.util.concurrent.CompletionException
+            || throwable instanceof ExecutionException) && throwable.getCause() != null) {
+            throwable = throwable.getCause();
+        }
+        return throwable instanceof JeiStartCancelled || throwable instanceof CancellationException;
     }
 
     public static void awaitJeiStartTask(CompletableFuture<?> future) {
@@ -147,6 +151,9 @@ public final class JeiOptExecutors {
         } catch (CancellationException e) {
             throw new JeiStartCancelled();
         } catch (ExecutionException e) {
+            if (isJeiStartCancellation(e)) {
+                throw new JeiStartCancelled();
+            }
             Throwable cause = e.getCause();
             if (cause instanceof RuntimeException runtimeException) {
                 throw runtimeException;
@@ -210,6 +217,9 @@ public final class JeiOptExecutors {
         } catch (CancellationException e) {
             throw new JeiStartCancelled();
         } catch (ExecutionException e) {
+            if (isJeiStartCancellation(e)) {
+                throw new JeiStartCancelled();
+            }
             Throwable cause = e.getCause();
             if (cause instanceof RuntimeException runtimeException) {
                 throw runtimeException;

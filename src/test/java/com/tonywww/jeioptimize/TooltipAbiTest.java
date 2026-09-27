@@ -91,6 +91,11 @@ public final class TooltipAbiTest {
                         new ClassReader(source).accept(internal, 0);
                     }
                     check(JeiOptMixinPlugin.hasSessionCacheContract(observer, internal), "released session cache ABI");
+                    var runtimeField = internal.fields.stream().filter(f -> f.name.equals("jeiRuntime")).findFirst().orElseThrow();
+                    String runtimeDescriptor = runtimeField.desc;
+                    runtimeField.desc = "Ljava/lang/Object;";
+                    check(!JeiOptMixinPlugin.hasSessionCacheContract(observer, internal), "cache rejected without its runtime accessor ABI");
+                    runtimeField.desc = runtimeDescriptor;
                     var event = observer.methods.stream().filter(m -> m.name.equals("onRecipesUpdatedEvent")).findFirst().orElseThrow();
                     long restarts = java.util.Arrays.stream(event.instructions.toArray()).filter(i ->
                         i instanceof MethodInsnNode call && call.name.equals("restart") && call.desc.equals("()V")

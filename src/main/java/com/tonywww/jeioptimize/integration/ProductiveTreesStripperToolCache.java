@@ -6,24 +6,31 @@ import net.minecraft.world.item.crafting.Ingredient;
 import java.util.function.Supplier;
 
 public final class ProductiveTreesStripperToolCache {
-    private static volatile long generation = Long.MIN_VALUE;
-    private static volatile Ingredient ingredient;
+    private static volatile Entry entry;
 
     private ProductiveTreesStripperToolCache() {
     }
 
     public static Ingredient get(Supplier<Ingredient> factory) {
         long currentGeneration = JeiOptRuntimeState.currentGeneration();
-        Ingredient cached = ingredient;
-        if (cached != null && generation == currentGeneration) {
-            return cached;
+        Entry cached = entry;
+        if (cached != null && cached.generation() == currentGeneration) {
+            return cached.ingredient();
         }
         synchronized (ProductiveTreesStripperToolCache.class) {
-            if (ingredient == null || generation != currentGeneration) {
-                ingredient = factory.get();
-                generation = currentGeneration;
+            cached = entry;
+            if (cached != null && cached.generation() == currentGeneration) {
+                return cached.ingredient();
+            }
+            Ingredient ingredient = factory.get();
+            if (JeiOptRuntimeState.isCurrent(currentGeneration)) {
+                entry = ingredient == null ? null : new Entry(currentGeneration, ingredient);
             }
             return ingredient;
         }
     }
+
+    public static synchronized void clear() { entry = null; }
+
+    private record Entry(long generation, Ingredient ingredient) {}
 }

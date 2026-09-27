@@ -74,6 +74,8 @@ public final class JeiOptStartupDriver {
         TooltipSearchShadow.cancelAll();
         JeiRecipeGenerationLimiter.clearAll();
         JeiOptCacheScope.clear();
+        com.tonywww.jeioptimize.recipe.BrewingRecipeIndex.clear();
+        ProductiveTreesStripperToolCache.clear();
         CelestialForgeReinforceCache.clear();
         CelestialForgeReinforceInputPool.clear();
         EmbersDawnstoneAnvilCompactor.clear();
