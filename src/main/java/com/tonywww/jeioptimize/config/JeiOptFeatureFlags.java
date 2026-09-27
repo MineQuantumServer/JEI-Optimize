@@ -24,7 +24,11 @@ public final class JeiOptFeatureFlags {
     }
 
     public static boolean sessionRuntimeCache() {
-        return enabled() && configReady() && JeiOptConfig.GENERAL_SESSION_RUNTIME_CACHE.get();
+        return enabled() && configReady() && JeiOptConfig.GENERAL_CACHE_MODE.get() == JeiOptConfig.CacheMode.FULL;
+    }
+
+    public static boolean pinyinDictionaryCache() {
+        return enabled() && configReady() && JeiOptConfig.GENERAL_PINYIN_DICTIONARY_CACHE.get();
     }
 
     public static boolean registrationCounts() {

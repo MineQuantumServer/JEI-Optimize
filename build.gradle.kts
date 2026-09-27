@@ -174,6 +174,7 @@ val compileTooltipTests = tasks.register<JavaCompile>("compileTooltipTests") {
     })
 }
 val tooltipTests = listOf(
+    "index.TooltipPinyinDictionaryTest",
     "runtime.TooltipSessionCacheTest",
     "integration.TooltipMineColoniesAttributesTest",
     "index.TooltipDeferredStorageTest",
@@ -198,6 +199,9 @@ val tooltipTests = listOf(
         })
         findProperty("tooltipTest.jars")?.toString()?.let { jars ->
             args(jars.split(';').filter(String::isNotBlank))
+        }
+        if (testClass == "index.TooltipPinyinDictionaryTest") {
+            findProperty("pinyinTest.jar")?.toString()?.let { args(it) }
         }
     }
 }

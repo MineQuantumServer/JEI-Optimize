@@ -1151,6 +1151,9 @@ public final class JeiOptMixinPlugin implements IMixinConfigPlugin {
             return hasRuntimeAccessContract(readTarget("mezz.jei.common.Internal"))
                 && hasScreenRenderGuardContract(readTarget(targetClassName));
         }
+        if (mixinClassName.equals(MIXIN_PACKAGE + "compat.JechDictionaryCacheMixin")) {
+            return hasPinyinDictionaryContract(readTarget(targetClassName), readTarget("me.towdium.jecharacters.utils.Match"));
+        }
         if ((mixinClassName.equals(MIXIN_PACKAGE + "JeiGuiRenderGuardMixin")
             || mixinClassName.equals(MIXIN_PACKAGE + "JeiGuiBackgroundRenderGuardLegacyMixin")
             || mixinClassName.equals(MIXIN_PACKAGE + "JeiGuiBackgroundRenderGuardModernMixin"))
@@ -1382,6 +1385,18 @@ public final class JeiOptMixinPlugin implements IMixinConfigPlugin {
             && Requirement.method("session cache", "onResourceManagerReload",
                 "(Lnet/minecraft/server/packs/resources/ResourceManager;)V").isPresentIn(observer)
             && Requirement.method("session cache", "getClientSyncedRecipes", "()Ljava/util/List;").isPresentIn(internal);
+    }
+
+    static boolean hasPinyinDictionaryContract(ClassNode storage, ClassNode match) {
+        if (storage == null || match == null) return false;
+        return Requirement.method("pinyin cache", "<init>", "()V").isPresentIn(storage)
+            && Requirement.method("pinyin cache", "put", "(Ljava/lang/String;Ljava/lang/Object;)V").isPresentIn(storage)
+            && Requirement.method("pinyin cache", "getSearchResults", "(Ljava/lang/String;Ljava/util/function/Consumer;)V").isPresentIn(storage)
+            && Requirement.method("pinyin cache", "getAllElements", "(Ljava/util/function/Consumer;)V").isPresentIn(storage)
+            && Requirement.method("pinyin cache", "statistics", "()Ljava/lang/String;").isPresentIn(storage)
+            && storage.fields.stream().anyMatch(f -> f.name.equals("tree")
+                && f.desc.equals("Lme/towdium/pinin/searchers/TreeSearcher;"))
+            && Requirement.method("pinyin cache", "searcher", "()Lme/towdium/pinin/searchers/TreeSearcher;").isPresentIn(match);
     }
 
     static boolean hasNativeSearchBuilderContract(ClassNode search) {

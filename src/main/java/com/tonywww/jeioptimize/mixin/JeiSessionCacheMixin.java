@@ -27,6 +27,7 @@ public abstract class JeiSessionCacheMixin {
 
     @Inject(method = "onResourceManagerReload", remap = false, at = @At("HEAD"), require = 1)
     private void jeiopt$invalidateResources(CallbackInfo ci) {
+        com.tonywww.jeioptimize.index.PinyinDictionaryCache.clear();
         JeiSessionCache.clear();
     }
 }

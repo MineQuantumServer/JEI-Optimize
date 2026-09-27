@@ -10,6 +10,7 @@
     "ExtendableRecipeCategoryHelperMixin",
     "JeiStarterMixin",
     "JeiSessionCacheMixin",
+    "compat.JechDictionaryCacheMixin",
     "JeiStarterPublishLegacyMixin",
     "JeiStarterPublishModernMixin",
     "JeiStarterRuntimeCallbacksMixin",

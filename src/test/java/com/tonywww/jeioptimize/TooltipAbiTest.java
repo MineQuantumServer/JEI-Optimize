@@ -338,6 +338,7 @@ public final class TooltipAbiTest {
         Map<String, ClassNode> targets = new HashMap<>();
         try (ZipFile archive = new ZipFile(path.toFile())) {
             String prefix = switch (kind) {
+                case "jecharacters" -> "me/towdium/jecharacters/";
                 case "minecolonies" -> "com/minecolonies/";
                 case "irons-supported", "irons-unsupported" -> "io/redspace/ironsspellbooks/";
                 default -> throw new IllegalArgumentException("Unknown compatibility fixture: " + kind);
@@ -355,6 +356,34 @@ public final class TooltipAbiTest {
                     targets.put(target.name.replace('/', '.'), target);
                 }
             }
+        }
+        if (kind.equals("jecharacters")) {
+            ClassNode storage = targets.get("me.towdium.jecharacters.JechSearchStorage");
+            ClassNode match = targets.get("me.towdium.jecharacters.utils.Match");
+            check(JeiOptMixinPlugin.hasPinyinDictionaryContract(storage, match), "released JECharacters ABI");
+            try (InputStream input = TooltipAbiTest.class.getResourceAsStream("/com/tonywww/jeioptimize/mixin/compat/JechDictionaryCacheMixin.class")) {
+                ClassNode mixin = new ClassNode();
+                new ClassReader(input).accept(mixin, 0);
+                int hooks = 0;
+                for (MethodNode method : mixin.methods) {
+                    if (method.visibleAnnotations == null) continue;
+                    for (var annotation : method.visibleAnnotations) {
+                        if (!annotation.desc.endsWith("/Inject;")) continue;
+                        Map<String, Object> values = new HashMap<>();
+                        for (int i = 0; i < annotation.values.size(); i += 2) values.put((String) annotation.values.get(i), annotation.values.get(i + 1));
+                        for (Object selector : (java.util.List<?>) values.get("method")) {
+                            check(storage.methods.stream().anyMatch(m -> (m.name + m.desc).equals(selector)), "packaged pinyin selector " + selector);
+                        }
+                        check(Integer.valueOf(1).equals(values.get("require")), "pinyin hook cannot silently fail");
+                        hooks++;
+                    }
+                }
+                check(hooks == 5, "all pinyin storage operations guarded");
+            }
+            storage.fields.removeIf(f -> f.name.equals("tree"));
+            check(!JeiOptMixinPlugin.hasPinyinDictionaryContract(storage, match), "reject changed pinyin field ABI");
+            System.out.println("JECharacters storage ABI passed: " + path.getFileName());
+            return true;
         }
         if (kind.equals("minecolonies")) {
             check(targets.containsKey("com.minecolonies.core.compatibility.jei.JEIPlugin"), "MineColonies fixture contains plugin");

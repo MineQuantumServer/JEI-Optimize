@@ -7,6 +7,7 @@ import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.Builder;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.common.ForgeConfigSpec.IntValue;
+import net.minecraftforge.common.ForgeConfigSpec.EnumValue;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -19,6 +20,7 @@ import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue;
 import net.neoforged.neoforge.common.ModConfigSpec.Builder;
 import net.neoforged.neoforge.common.ModConfigSpec.ConfigValue;
 import net.neoforged.neoforge.common.ModConfigSpec.IntValue;
+import net.neoforged.neoforge.common.ModConfigSpec.EnumValue;
 *///?}
 
 import java.io.IOException;
@@ -37,7 +39,9 @@ public final class JeiOptConfig {
     *///?}
 
     static final BooleanValue GENERAL_ENABLED;
-    static final BooleanValue GENERAL_SESSION_RUNTIME_CACHE;
+    public enum CacheMode { ACCURATE, FULL }
+    static final EnumValue<CacheMode> GENERAL_CACHE_MODE;
+    static final BooleanValue GENERAL_PINYIN_DICTIONARY_CACHE;
 
     static final BooleanValue CONTENT_DISABLE_ANVIL_REPAIR;
     static final BooleanValue CONTENT_DISABLE_ANVIL_ENCHANT;
@@ -115,12 +119,18 @@ public final class JeiOptConfig {
         GENERAL_ENABLED = builder
             .comment("Master switch. If false, all JEI Optimize mixin behavior no-ops or falls back to JEI baseline.")
             .define("enabled", true);
-        GENERAL_SESSION_RUNTIME_CACHE = builder
-            .comment("Experimental NeoForge 1.21.1 / JEI 19.57 same-connection runtime cache.",
-                "Enable only for proxy subservers with identical mod/plugin scripts and settings.",
-                "Checks synchronized recipes, registry contents and tags before reusing JEI.",
-                "Plugin-specific custom network data is not covered. Disconnect or F3+T forces rebuild.")
-            .define("sessionRuntimeCache", false);
+        GENERAL_CACHE_MODE = builder
+            .comment("ACCURATE / 保持准确: rebuild current-server recipes; reuse only string/pinyin work.",
+                "FULL / 全部缓存: retain the complete JEI runtime across same-connection proxy transfers.",
+                "FULL skips recipe-data validation and can display old recipes when subservers differ.",
+                "首次进服仍需加载。断开连接、F3+T 或 JEI 手动重载会重建。切换模式在下次重建/跨服时生效。",
+                "The legacy sessionRuntimeCache setting is replaced by this mode; default remains ACCURATE.")
+            .defineEnum("cacheMode", CacheMode.ACCURATE);
+        GENERAL_PINYIN_DICTIONARY_CACHE = builder
+            .comment("Cache JECharacters' string-only pinyin dictionary across JEI rebuilds.",
+                "Current ingredient mappings and recipes are always rebuilt; no prior server recipe is reused.",
+                "Bounded at 100,000 words / 8 million characters; excess words use the original local index.")
+            .define("pinyinDictionaryCache", true);
         builder.pop();
 
         builder.push("jeiContent");

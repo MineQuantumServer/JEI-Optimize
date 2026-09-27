@@ -23,7 +23,6 @@ public abstract class ClientTickHookMixin {
     @Inject(method = "tick", at = @At("TAIL"))
     private void jeiOptimize$drainClientTickQueue(CallbackInfo callbackInfo) {
         JeiOptClientTickQueue.drainForCurrentTick();
-        com.tonywww.jeioptimize.runtime.JeiSessionCache.tick();
         JeiOptFilterBootstrap.clientTickFinished(jeiOptimize$tickStarted);
         JeiOptBenchmark.tick(jeiOptimize$tickStarted);
     }

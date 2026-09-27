@@ -4,6 +4,27 @@ All notable changes to Just Enough Threads are documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.2-mq.4
+
+- Replace `sessionRuntimeCache` with `general.cacheMode = "ACCURATE" | "FULL"`.
+  ACCURATE is the default and rebuilds current-server recipes. FULL deliberately
+  retains the complete JEI runtime across same-connection transfers without
+  checking recipe equality. Reconnects, resource/manual reloads and incomplete
+  startup never qualify. Modes are selected at the next recipe-resync event.
+- Remove mq.3's expensive full-data fingerprint from the startup path. Real client
+  captures found 27 changed recipe encodings, two removed/two added recipe IDs,
+  14 changed tag encodings and one changed item-registry encoding between subservers.
+  A failed check added 10.664 seconds before a 46.72-second rebuild.
+- Add a bounded, string-only shared JECharacters pinyin dictionary. Every runtime
+  rebuilds its own word-to-current-ingredient mapping, so strings remembered from
+  another world cannot return that world's ingredients. Recipe data is never stored
+  in the dictionary. Overflow uses the original per-storage pinyin tree; keyboard
+  and fuzzy-pinyin changes still refresh trees through JECharacters' own tracking.
+- Validation: full NeoForge build and 11 regression runners pass, including
+  differential query checks against the installed PinIn 1.6.0, changed generations,
+  runtime additions and bounded-cache overflow. Packaged ABI checks pass against
+  JEI 19.57.0.449 and JECharacters 4.5.29. Game performance remains to be measured.
+
 ## 0.14.2-mq.3
 
 ### Added

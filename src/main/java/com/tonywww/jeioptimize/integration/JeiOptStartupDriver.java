@@ -20,11 +20,14 @@ public final class JeiOptStartupDriver {
     }
 
     public static void onJeiStarting() {
+        com.tonywww.jeioptimize.index.PinyinDictionaryCache.begin();
         clearRuntimeWork();
         JeiOptFilterBootstrap.begin(JeiOptRuntimeState.currentGeneration());
     }
 
     public static void onRuntimeAvailable() {
+        com.tonywww.jeioptimize.runtime.JeiSessionCache.captureIfNeeded();
+        com.tonywww.jeioptimize.index.PinyinDictionaryCache.report();
         if (!JeiOptFeatureFlags.enabled()) {
             return;
         }
