@@ -19,6 +19,7 @@ import java.util.zip.ZipFile;
 
 public final class TooltipAbiTest {
     public static void main(String[] arguments) throws IOException {
+        verifyNativeSearchConstructors();
         verifyRenderPreparationGuard();
         verifyMineColoniesContracts();
         verifyMineColoniesAttributeContract();
@@ -78,6 +79,20 @@ public final class TooltipAbiTest {
                 continue;
             }
             try (ZipFile archive = new ZipFile(argument)) {
+                var searchEntry = archive.getEntry("mezz/jei/gui/search/ElementSearch.class");
+                if (searchEntry != null) {
+                    try (InputStream source = archive.getInputStream(searchEntry)) {
+                        ClassNode search = new ClassNode();
+                        new ClassReader(source).accept(search, 0);
+                        if (JeiOptMixinPlugin.hasNativeSearchBuilderContract(search)) {
+                            var selectors = nativeSearchSelectors();
+                            check(search.methods.stream().anyMatch(method -> method.name.equals("<init>")
+                                && selectors.contains("<init>" + method.desc)), "native builder selector matches released JEI " + argument);
+                        } else if (argument.contains("19.57.")) {
+                            throw new AssertionError("JEI 19.57 native builder must be supported");
+                        }
+                    }
+                }
                 try (InputStream source = archive.getInputStream(archive.getEntry("mezz/jei/common/Internal.class"))) {
                     ClassNode internal = new ClassNode();
                     new ClassReader(source).accept(internal, 0);
@@ -128,6 +143,47 @@ public final class TooltipAbiTest {
             }
         }
         System.out.println("TooltipAbiTest passed");
+    }
+
+    private static java.util.List<?> nativeSearchSelectors() throws IOException {
+        try (InputStream source = TooltipAbiTest.class.getResourceAsStream(
+            "/com/tonywww/jeioptimize/mixin/JeiNativeSearchBuilderMixin.class")) {
+            check(source != null, "native builder mixin exists");
+            ClassNode mixin = new ClassNode();
+            new ClassReader(source).accept(mixin, 0);
+            var hook = mixin.methods.stream().filter(method -> method.name.equals("jeiopt$retainBulkBuilder"))
+                .findFirst().orElseThrow();
+            for (var annotation : hook.visibleAnnotations) {
+                if (!annotation.desc.endsWith("/WrapOperation;")) { continue; }
+                for (int index = 0; index < annotation.values.size(); index += 2) {
+                    if (annotation.values.get(index).equals("method")) {
+                        return (java.util.List<?>) annotation.values.get(index + 1);
+                    }
+                }
+            }
+            throw new AssertionError("missing native builder selectors");
+        }
+    }
+
+    private static void verifyNativeSearchConstructors() throws IOException {
+        var selectors = nativeSearchSelectors();
+        String legacy = "(Lmezz/jei/gui/search/ElementPrefixParser;)V";
+        String modern = "(Lmezz/jei/gui/search/ElementPrefixParser;Ljava/util/Collection;Lmezz/jei/api/runtime/IIngredientManager;)V";
+        for (String descriptor : new String[]{legacy, modern}) {
+            check(selectors.contains("<init>" + descriptor), "explicit selector survives build for " + descriptor);
+            ClassNode search = new ClassNode();
+            MethodNode constructor = new MethodNode(Opcodes.ACC_PUBLIC, "<init>", descriptor, null, null);
+            search.methods.add(constructor);
+            check(!JeiOptMixinPlugin.hasNativeSearchBuilderContract(search), "constructor without build rejected");
+            constructor.instructions.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE,
+                "mezz/jei/api/search/ISearchStorageBuilder", "build", "()Lmezz/jei/api/search/ISearchStorage;", true));
+            check(JeiOptMixinPlugin.hasNativeSearchBuilderContract(search), "known constructor accepted");
+            constructor.desc = "(Ljava/lang/Object;)V";
+            check(!JeiOptMixinPlugin.hasNativeSearchBuilderContract(search), "unknown constructor with build rejected");
+            constructor.desc = descriptor;
+            constructor.name = "rebuild";
+            check(!JeiOptMixinPlugin.hasNativeSearchBuilderContract(search), "non-constructor build rejected");
+        }
     }
 
     private static void verifyRenderPreparationGuard() throws IOException {

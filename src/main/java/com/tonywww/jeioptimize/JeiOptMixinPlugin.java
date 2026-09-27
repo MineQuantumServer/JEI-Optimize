@@ -1359,6 +1359,10 @@ public final class JeiOptMixinPlugin implements IMixinConfigPlugin {
         if (search == null) { return false; }
         for (MethodNode method : search.methods) {
             if (!method.name.equals("<init>")) { continue; }
+            if (!method.desc.equals("(Lmezz/jei/gui/search/ElementPrefixParser;)V")
+                && !method.desc.equals("(Lmezz/jei/gui/search/ElementPrefixParser;Ljava/util/Collection;Lmezz/jei/api/runtime/IIngredientManager;)V")) {
+                continue;
+            }
             for (AbstractInsnNode instruction : method.instructions) {
                 if (instruction instanceof MethodInsnNode invocation
                     && invocation.owner.equals("mezz/jei/api/search/ISearchStorageBuilder")

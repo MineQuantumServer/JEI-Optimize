@@ -4,6 +4,26 @@ All notable changes to Just Enough Threads are documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.2-mq.1
+
+### Fixed
+
+- Fix the native search builder hook on JEI 19.57.0.449. The released 0.14.1 jar
+  targeted only `ElementSearch(ElementPrefixParser)`, while modern JEI constructs
+  it with an initial collection and ingredient manager as well. The failed Mixin
+  aborted asynchronous startup and left the inventory without a JEI sidebar.
+- Declare both supported constructor descriptors explicitly and disable remapping
+  on the hook so packaging cannot specialize it to the compile-time JEI version.
+  The ABI gate now rejects unknown constructors even if they call the same builder.
+
+### Validation
+
+- Regression checks cover both constructor shapes, unknown signatures, missing
+  builder calls, compiled annotation selectors and the installed JEI 19.57 jar.
+- `scripts/build-neoforge-hotfix.ps1` builds the two unmapped replacement classes
+  against the released NeoForge 0.14.1 jar and runs ABI tests with the resulting
+  jar first on the classpath. It does not claim to be a complete Gradle build.
+
 ## 0.14.1
 
 ### Fixed
