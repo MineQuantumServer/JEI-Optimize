@@ -1138,6 +1138,18 @@ public final class JeiOptMixinPlugin implements IMixinConfigPlugin {
         if (!readEarlyBoolean("enabled", true)) {
             return false;
         }
+        if ((MIXIN_PACKAGE + "DynamicTextureStartupMixin").equals(mixinClassName)) {
+            //? if forge {
+            return false;
+            //?} else {
+            /*
+            boolean compatible = hasDynamicTextureLifecycleContract(readTarget(targetClassName));
+            if (!compatible) {
+                LOGGER.warn("JEI Optimize disposed-texture protection disabled: unrecognized DynamicTexture ABI");
+            }
+            return compatible;
+            *///?}
+        }
         if (mixinClassName.equals(MIXIN_PACKAGE + "JeiSessionCacheMixin")) {
             ClassNode observer = readTarget(targetClassName);
             ClassNode internal = readTarget("mezz.jei.common.Internal");
@@ -1375,6 +1387,36 @@ public final class JeiOptMixinPlugin implements IMixinConfigPlugin {
             && Requirement.method("", "updateForScreenRender", "(Lnet/minecraft/client/gui/screens/Screen;II)V").isPresentIn(handler)
             && Requirement.method("", "drawForScreenBackground", "(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphics;)V").isPresentIn(handler)
             && Requirement.method("", "drawForScreenForeground", "(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphics;II)V").isPresentIn(handler);
+    }
+
+    static boolean hasDynamicTextureLifecycleContract(ClassNode texture) {
+        if (texture == null
+            || !Requirement.field("texture lifecycle", "pixels", "Lcom/mojang/blaze3d/platform/NativeImage;").isPresentIn(texture)
+            || !Requirement.method("texture lifecycle", "<init>", "(Lcom/mojang/blaze3d/platform/NativeImage;)V").isPresentIn(texture)
+            || !Requirement.method("texture lifecycle", "close", "()V").isPresentIn(texture)
+            || !Requirement.method("texture lifecycle", "setPixels", "(Lcom/mojang/blaze3d/platform/NativeImage;)V").isPresentIn(texture)) {
+            return false;
+        }
+        String owner = "net/minecraft/client/renderer/texture/DynamicTexture";
+        for (MethodNode method : texture.methods) {
+            if ((method.name.equals("lambda$new$0") || method.name.equals("method_22793")) && method.desc.equals("()V")
+                && (method.access & Opcodes.ACC_STATIC) == 0) {
+                boolean width = false;
+                boolean height = false;
+                boolean upload = false;
+                for (AbstractInsnNode instruction : method.instructions) {
+                    if (instruction instanceof MethodInsnNode call) {
+                        width |= call.owner.equals("com/mojang/blaze3d/platform/NativeImage")
+                            && call.name.equals("getWidth") && call.desc.equals("()I");
+                        height |= call.owner.equals("com/mojang/blaze3d/platform/NativeImage")
+                            && call.name.equals("getHeight") && call.desc.equals("()I");
+                        upload |= call.owner.equals(owner) && call.name.equals("upload") && call.desc.equals("()V");
+                    }
+                }
+                return width && height && upload;
+            }
+        }
+        return false;
     }
 
     static boolean hasSessionCacheContract(ClassNode observer, ClassNode internal) {

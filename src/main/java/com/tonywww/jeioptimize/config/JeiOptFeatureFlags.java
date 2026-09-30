@@ -300,6 +300,9 @@ public final class JeiOptFeatureFlags {
     }
 
     public static boolean pluginRequiresMainThread(String pluginUid) {
+        if (JeiMainThreadPluginPolicy.requiresBuiltInMainThread(pluginUid)) {
+            return true;
+        }
         JeiOptConfigSnapshot.Snapshot snapshot = JeiOptConfigSnapshot.current();
         Set<String> configuredEntries = snapshot != null
             ? snapshot.mainThreadPluginIds()

@@ -93,7 +93,7 @@ public abstract class PluginCallerMixin {
                             pluginCall.run();
                         }
                     };
-                    if (guiRegistration) {
+                    if (guiRegistration || "thaumcraft:jei_plugin".equals(pluginUid)) {
                         JeiOptExecutors.runWhenWorldReadyAndWait(mainThreadCall);
                     } else {
                         JeiOptExecutors.runOnMainThreadAndWait(mainThreadCall);

@@ -15,6 +15,11 @@ public final class JeiMainThreadPluginPolicy {
         "productivetrees:productivetrees"
     );
 
+    // Keep this separate from configurable defaults: existing config files retain their lists.
+    public static boolean requiresBuiltInMainThread(String pluginUid) {
+        return "thaumcraft:jei_plugin".equals(pluginUid);
+    }
+
     private static final Pattern ENTRY_PATTERN = Pattern.compile(
         "[a-z0-9_.-]+(?::[a-z0-9/._-]+)?"
     );

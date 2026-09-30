@@ -73,6 +73,7 @@
     "accessor.SophisticatedStorageShulkerRecipeAccessor"
   ],
   "client": [
+    "DynamicTextureStartupMixin",
     "accessor.JeiRuntimeAccessor",
     "JeiNativeSearchBuilderMixin",
     "JeiStartupGridRefreshMixin",

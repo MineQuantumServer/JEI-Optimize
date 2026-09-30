@@ -4,6 +4,25 @@ All notable changes to Just Enough Threads are documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.2-mq.8
+
+- On NeoForge, skip queued DynamicTexture initialization after the texture has
+  been disposed. Serialize queued initialization, close and image replacement
+  on the texture monitor, while preserving live initialization and genuine errors.
+  Bytecode checks require the known callback body before applying the hooks.
+- Record the creating thread, active JEI callback and direct caller for disposed
+  textures. The reported timing implicates Thaumcraft but does not identify the
+  texture creator, so diagnostics retain that distinction.
+- Always route `thaumcraft:jei_plugin` callbacks to the client thread with a world,
+  player and connection ready. This also applies to existing configuration lists.
+  Other callbacks remain serial and the configured cache mode still applies.
+- Validation: NeoForge 1.21.1 build and 16 regression runners; packaged ABI checks
+  against production Minecraft, JEI 19.57.0.449 and JECharacters 4.5.29. A real
+  NeoForge 21.1.235 client probe creates/closes a texture off-thread before replay;
+  the protected callback is skipped and the actual render queue continues.
+  Acceptance on the reporting player's full modpack remains pending.
+  See [the crash diagnosis](docs/mq8-disposed-texture-race.md).
+
 ## 0.14.2-mq.7
 
 - Treat ordinary and future-wrapped startup cancellation as cancellation, rather

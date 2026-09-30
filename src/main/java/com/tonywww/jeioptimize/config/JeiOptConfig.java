@@ -421,7 +421,9 @@ public final class JeiOptConfig {
                 "Use a full plugin ID such as \"theurgy:jei_plugin\", or a mod ID such as \"theurgy\"",
                 "to route every JEI plugin from that mod. Add entries when a log reports that a plugin",
                 "called a main-thread-only API from justenoughthreads-start. JEI's own creative-tab",
-                "enumeration and GUI runtime construction stay on the client thread automatically.")
+                "enumeration and GUI runtime construction stay on the client thread automatically.",
+                "Thaumcraft's known client-world callbacks always run on the client thread, including",
+                "when an existing configuration does not list thaumcraft.")
             .defineListAllowEmpty(
                 "mainThreadPlugins",
                 JeiMainThreadPluginPolicy.DEFAULT_PLUGIN_IDS,

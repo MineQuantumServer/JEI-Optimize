@@ -1,6 +1,6 @@
 # JEI 19.57 missing sidebar after asynchronous startup
 
-Current release: mq.7 (FULL by default for new configurations; existing settings
+Current release: mq.8 (FULL by default for new configurations; existing settings
 are preserved). See [cache modes](cache-modes.md) for ACCURATE/FULL and the
 string-only pinyin dictionary cache. The mq.3 digest experiment below is historical
 and was removed after real subserver differences were measured.
@@ -10,6 +10,9 @@ GUI APIs after failed initialization. See [mq.6 diagnosis](mq6-startup-world-rac
 
 mq.7 fixes additional cancellation, warmup, cache cleanup and compatibility-gate
 issues found in the [code review](code-review-mq7.md).
+
+mq.8 protects deferred texture initialization against disposal, and routes
+Thaumcraft callbacks to the client thread. See [the texture crash diagnosis](mq8-disposed-texture-race.md).
 
 The affected client runs Minecraft 1.21.1, NeoForge 21.1.251, JEI 19.57.0.449
 and Just Enough Threads 0.14.1. Joining and switching servers reaches the world,

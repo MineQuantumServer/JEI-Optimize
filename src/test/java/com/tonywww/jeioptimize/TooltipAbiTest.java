@@ -21,6 +21,7 @@ public final class TooltipAbiTest {
     public static void main(String[] arguments) throws IOException {
         verifyNativeSearchConstructors();
         verifyModernFilterConstructorHooks();
+        verifyDynamicTextureContract();
         check(!JeiOptMixinPlugin.hasScreenRenderGuardContract(new ClassNode()), "missing screen render ABI rejected");
         verifyRenderPreparationGuard();
         verifyMineColoniesContracts();
@@ -580,6 +581,31 @@ public final class TooltipAbiTest {
         instructions.add(new InvokeDynamicInsnNode("getMode",
             "(Lnet/mezzdev/config/api/value/IConfigValue;)Lmezz/jei/common/search/PrefixInfo$IModeGetter;", bootstrap, get));
         return parser;
+    }
+
+    private static void verifyDynamicTextureContract() throws IOException {
+        ClassNode texture = new ClassNode();
+        try (InputStream source = TooltipAbiTest.class.getClassLoader().getResourceAsStream(
+            "net/minecraft/client/renderer/texture/DynamicTexture.class")) {
+            check(source != null, "actual Minecraft DynamicTexture class available");
+            new ClassReader(source).accept(texture, 0);
+        }
+        boolean named = texture.fields.stream().anyMatch(field -> field.name.equals("pixels"))
+            && texture.methods.stream().anyMatch(method -> method.name.equals("lambda$new$0") || method.name.equals("method_22793"));
+        if (named) {
+            check(JeiOptMixinPlugin.hasDynamicTextureLifecycleContract(texture), "actual named DynamicTexture ABI");
+            MethodNode callback = texture.methods.stream().filter(method -> method.name.equals("lambda$new$0")
+                || method.name.equals("method_22793")).findFirst().orElseThrow();
+            String originalName = callback.name;
+            callback.name = "changedQueuedCallback";
+            check(!JeiOptMixinPlugin.hasDynamicTextureLifecycleContract(texture), "changed callback opts out");
+            callback.name = originalName;
+            texture.fields.stream().filter(field -> field.name.equals("pixels")).findFirst().orElseThrow().desc = "Ljava/lang/Object;";
+            check(!JeiOptMixinPlugin.hasDynamicTextureLifecycleContract(texture), "changed image field opts out");
+        } else {
+            check(!JeiOptMixinPlugin.hasDynamicTextureLifecycleContract(texture), "unsupported obfuscated texture safely opts out");
+        }
+        check(!JeiOptMixinPlugin.hasDynamicTextureLifecycleContract(new ClassNode()), "absent texture ABI opts out");
     }
 
     private static void check(boolean condition, String message) {
